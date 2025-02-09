@@ -1,13 +1,11 @@
-
-
 services:
   db:
     image: postgres:13
     container_name: ebd_db
     environment:
-      POSTGRES_USER: lucas
-      POSTGRES_PASSWORD: ${PASSWORD}
-      POSTGRES_DB: secretaria_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ebd_sistema
     ports:
       - "5432:5432"
     volumes:
@@ -20,7 +18,7 @@ services:
       - "5000:5000"
     environment:
       - FLASK_ENV=development
-      - ${DATABASE_URL}
+      - DATABASE_URL=postgresql://user:password@db:5432/ebd_sistema
     depends_on:
       - db
     volumes:
