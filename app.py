@@ -14,15 +14,49 @@ from flask_cors import CORS
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+
+# Configuração do CORS
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin"],
+        "supports_credentials": True,
+        "expose_headers": ["Content-Range", "X-Content-Range"]
+    }
+})
+
+# Configurações do app
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'super-secret-key')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
+# Configuração adicional do JWT para CORS
+app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['JWT_HEADER_NAME'] = 'Authorization'
+app.config['JWT_HEADER_TYPE'] = 'Bearer'
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 swagger = Swagger(app)
+
+logging.basicConfig(level=logging.INFO)
+
+# Adiciona headers CORS em todas as respostas
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
+# Handler específico para requisições OPTIONS
+@app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
+@app.route('/<path:path>', methods=['OPTIONS'])
+def handle_options(path):
+    return '', 200
 
 
 logging.basicConfig(level=logging.INFO)
